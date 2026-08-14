@@ -1,0 +1,16 @@
+{
+  "instagram": {
+    "username": "",
+    "password": "",
+    "verification_code": "",
+    "session_file": "session.json"
+  },
+  "target_username": "",
+  "proxy": "",
+  "request_delay": [1, 3],
+  "output": {
+    "directory": "output",
+    "write_csv": true,
+    "timestamped": false
+  }
+}
