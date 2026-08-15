@@ -29,9 +29,7 @@ Fill in `config.json`:
 | `target_username`            | account to scan; leave empty to use your own                            |
 | `proxy`                      | optional, e.g. `http://user:pass@host:port`                             |
 | `request_delay`              | `[min, max]` seconds of random delay between API requests               |
-| `output.directory`           | where results are written                                               |
-| `output.write_csv`           | also write `friends.csv` / `subscribers.csv` / `subscriptions.csv`      |
-| `output.timestamped`         | put each run in its own dated subfolder                                 |
+| `output.directory`           | parent folder the per-run result folders are created in                 |
 
 `config.json` and `session.json` are gitignored — only `config.example.json` is
 meant to be committed.
@@ -43,7 +41,34 @@ python tracker.py
 python tracker.py --config other.json --output-dir results --fresh-login
 ```
 
-Results land in `output/report.json` plus the CSV files.
+## Output
+
+Every run creates its own folder, stamped with the UTC date and time it started:
+
+```
+output/
+└── someaccount_2026-08-15_16-42-07/
+    ├── report.json         everything: account, fetched_at, counts, all buckets
+    ├── friends.json
+    ├── subscribers.json
+    └── subscriptions.json
+```
+
+Nothing is ever overwritten, so runs can be diffed against each other. Each of
+the per-bucket files is a JSON array of user records:
+
+```json
+[
+  {
+    "pk": "1234567890",
+    "username": "someone",
+    "full_name": "Some One",
+    "is_private": false,
+    "is_verified": false,
+    "profile_url": "https://www.instagram.com/someone/"
+  }
+]
+```
 
 ## Notes
 

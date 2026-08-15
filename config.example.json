@@ -9,8 +9,6 @@
   "proxy": "",
   "request_delay": [1, 3],
   "output": {
-    "directory": "output",
-    "write_csv": true,
-    "timestamped": false
+    "directory": "output"
   }
 }

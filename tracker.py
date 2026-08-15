@@ -6,12 +6,14 @@ Buckets are mutually exclusive:
     subscribers    - they follow you, you do not follow back
     subscriptions  - you follow them, they do not follow back
 
+Results are written as JSON into a per-run folder named
+<output.directory>/<account>_<YYYY-MM-DD_HH-MM-SS> (UTC).
+
 Usage:
     python tracker.py [--config config.json] [--output-dir output] [--fresh-login]
 """
 
 import argparse
-import csv
 import json
 import sys
 import time
@@ -179,46 +181,33 @@ def categorize(followers, following):
 # output
 # --------------------------------------------------------------------------- #
 
-CSV_FIELDS = ["username", "full_name", "pk", "is_private", "is_verified", "profile_url"]
-
-
-def write_csv(path, records):
-    with path.open("w", encoding="utf-8", newline="") as fh:
-        writer = csv.DictWriter(fh, fieldnames=CSV_FIELDS)
-        writer.writeheader()
-        for record in records:
-            writer.writerow({field: record[field] for field in CSV_FIELDS})
-
-
 def save_results(config, target_username, buckets):
     output = config.get("output") or {}
-    output_dir = Path(output.get("directory") or "output")
 
-    if output.get("timestamped"):
-        stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M-%S")
-        output_dir = output_dir / f"{target_username}_{stamp}"
-
+    # Every run gets its own dated folder, so results are never overwritten.
+    fetched_at = datetime.now(timezone.utc)
+    stamp = fetched_at.strftime("%Y-%m-%d_%H-%M-%S")
+    output_dir = Path(output.get("directory") or "output") / f"{target_username}_{stamp}"
     output_dir.mkdir(parents=True, exist_ok=True)
 
     report = {
         "account": target_username,
-        "fetched_at": datetime.now(timezone.utc).isoformat(),
+        "fetched_at": fetched_at.isoformat(),
         "counts": {name: len(records) for name, records in buckets.items()},
         **buckets,
     }
 
-    report_path = output_dir / "report.json"
-    with report_path.open("w", encoding="utf-8") as fh:
-        json.dump(report, fh, indent=2, ensure_ascii=False)
-
-    written = [report_path]
-    if output.get("write_csv", True):
-        for name in ("friends", "subscribers", "subscriptions"):
-            csv_path = output_dir / f"{name}.csv"
-            write_csv(csv_path, buckets[name])
-            written.append(csv_path)
+    written = [_write_json(output_dir / "report.json", report)]
+    for name in ("friends", "subscribers", "subscriptions"):
+        written.append(_write_json(output_dir / f"{name}.json", buckets[name]))
 
     return report, written
+
+
+def _write_json(path, payload):
+    with path.open("w", encoding="utf-8") as fh:
+        json.dump(payload, fh, indent=2, ensure_ascii=False)
+    return path
 
 
 def print_summary(report, written):
