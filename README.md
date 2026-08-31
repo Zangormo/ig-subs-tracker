@@ -70,6 +70,46 @@ the per-bucket files is a JSON array of user records:
 ]
 ```
 
+## Comparing two runs
+
+`analyzer.py` diffs two run folders and reports who came and went in between:
+
+```bash
+python analyzer.py                                  # the two most recent runs
+python analyzer.py --list                           # show available runs
+python analyzer.py --old output/me_A --new output/me_B
+python analyzer.py --account someaccount            # only that account's runs
+```
+
+| Bucket               | Meaning                                    |
+| -------------------- | ------------------------------------------ |
+| `new_subscribers`    | started following you                      |
+| `lost_subscribers`   | stopped following you                      |
+| `new_subscriptions`  | accounts you started following             |
+| `lost_subscriptions` | accounts you stopped following             |
+| `new_friends`        | became mutual since the older run          |
+| `lost_friends`       | were mutual, no longer are                 |
+| `renamed`            | same account, different username           |
+
+Accounts are matched by `pk`, not username, so someone changing their handle
+shows up under `renamed` rather than as one person leaving and another arriving.
+Records in `renamed` carry an extra `previous_username` field.
+
+The result goes into a folder next to the runs, in the same JSON format:
+
+```
+output/
+└── diff_someaccount_2026-08-15_16-42-07__2026-08-31_16-13-00/
+    ├── report.json          both run stamps, counts, and every bucket
+    ├── new_subscribers.json
+    ├── lost_subscribers.json
+    ├── new_subscriptions.json
+    ├── lost_subscriptions.json
+    ├── new_friends.json
+    ├── lost_friends.json
+    └── renamed.json
+```
+
 ## Notes
 
 - Instagram rate limits aggressively. The session cache exists so that repeated
